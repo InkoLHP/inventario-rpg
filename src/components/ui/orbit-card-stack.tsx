@@ -160,6 +160,7 @@ export function OrbitCardStack({
   const restingIndex = inRange(defaultActiveIndex, cards.length);
   const [activeIndex, setActiveIndex] = useState(restingIndex);
   const [open, setOpen] = useState(false);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const midpoint = (cards.length - 1) / 2;
 
@@ -208,7 +209,9 @@ export function OrbitCardStack({
       <div
         ref={stageRef}
         className="relative h-[470px] w-full max-w-[980px]"
-        onMouseLeave={close}
+        onMouseLeave={() => {
+          if (draggingIndex === null) close();
+        }}
         onBlur={leaveFocus}
         role="list"
         aria-label="Profile card stack"
@@ -216,24 +219,46 @@ export function OrbitCardStack({
         {cards.map((item, index) => {
           const position = open ? layouts[index]!.open : layouts[index]!.closed;
           const active = index === activeIndex;
+          const dragging = index === draggingIndex;
           const style: CSSProperties = {
-            zIndex: active ? 80 : 50 - Math.abs(index - activeIndex),
+            zIndex: dragging ? 100 : active ? 80 : 50 - Math.abs(index - activeIndex),
             transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${
               position.y - (open && active ? lift : 0)
             }px)) rotate(${position.rotation}deg) scale(${open ? 0.985 : 0.97})`,
-            transitionDuration: reduceMotion ? "0ms" : "420ms",
+            transitionDuration: reduceMotion ? "0ms" : dragging ? "160ms" : "420ms",
           };
 
           return (
             <article
               key={`${item.name}-${index}`}
               draggable
-              onDragStart={(e) => onCardDragStart?.(e, item, index)}
+              onDragStart={(e) => {
+                setDraggingIndex(index);
+                activate(index);
+                e.dataTransfer.effectAllowed = "move";
+                const preview = e.currentTarget.cloneNode(true) as HTMLElement;
+                preview.style.position = "fixed";
+                preview.style.left = "-1000px";
+                preview.style.top = "0";
+                preview.style.width = "264px";
+                preview.style.transform = "rotate(3deg) scale(0.92)";
+                preview.style.opacity = "0.96";
+                preview.style.pointerEvents = "none";
+                document.body.append(preview);
+                e.dataTransfer.setDragImage(preview, 28, 34);
+                requestAnimationFrame(() => preview.remove());
+                onCardDragStart?.(e, item, index);
+              }}
+              onDragEnd={() => {
+                setDraggingIndex(null);
+                close();
+              }}
               role="listitem"
               tabIndex={0}
               aria-current={active ? "true" : undefined}
               className={cn(
                 "absolute left-1/2 top-1/2 w-[min(78vw,21rem)] origin-bottom cursor-grab active:cursor-grabbing rounded-[1.9rem] border border-black/10 bg-[#e9e6df] p-4 text-[#141414] outline-none",
+                dragging && "opacity-70 scale-105 shadow-[0_24px_70px_rgba(0,0,0,0.55)]",
                 "transition-[transform] ease-[cubic-bezier(.2,.8,.2,1)] focus-visible:ring-2 focus-visible:ring-zinc-950/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 cardClassName,
               )}
@@ -266,22 +291,30 @@ export function OrbitCardStack({
             >
               <div className="relative">
                 <Portrait item={item} />
-                <span className="absolute right-3 top-3 grid size-11 place-items-center rounded-full bg-zinc-950 text-white shadow-lg shadow-black/20">
+                <span className="absolute left-3 top-3 rounded-full border border-amber-300/70 bg-[#1b120b]/90 px-3 py-1 font-medieval text-[9px] tracking-[0.18em] text-amber-200 shadow-lg">
+                  RELÍQUIA
+                </span>
+                <span className="absolute right-3 top-3 grid size-10 place-items-center rounded-full border border-amber-200/60 bg-[#1b120b]/90 text-amber-300 shadow-lg shadow-black/20">
                   <ArrowUpRight className="size-4" aria-hidden />
                 </span>
               </div>
               <div className="px-2 pb-2 pt-6">
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                <p className="font-medieval text-[0.65rem] font-bold uppercase tracking-[0.18em] text-amber-900/70">
                   {item.role}
                 </p>
-                <h3 className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-zinc-950">
+                <h3 className="mt-2 font-medieval text-[1.6rem] font-bold leading-tight tracking-[-0.03em] text-[#24170e]">
                   {item.name}
                 </h3>
-                <p className="mt-4 max-w-[17rem] text-[0.98rem] font-medium leading-[1.42] tracking-[-0.01em] text-zinc-700">
+                <p className="mt-3 max-w-[17rem] text-base leading-[1.35] text-[#4c3928]">
                   {item.description}
                 </p>
-                <div className="mt-5 border-t border-black/10 pt-4 text-[0.68rem] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                  {item.stat ?? "Profile"}
+                <div className="mt-4 flex items-center justify-between border-t border-amber-900/20 pt-3">
+                  <span className="font-medieval text-[0.65rem] font-bold uppercase tracking-[0.15em] text-amber-950/60">
+                    Poder
+                  </span>
+                  <span className="rounded-full border border-amber-800/25 bg-amber-900/10 px-3 py-1 font-medieval text-[0.65rem] font-bold uppercase tracking-wider text-amber-950">
+                    {item.stat ?? "Relíquia"}
+                  </span>
                 </div>
               </div>
             </article>

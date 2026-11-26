@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 520" fill="none">
+  <defs>
+    <linearGradient id="steel" x1="52" y1="110" x2="263" y2="452" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d6d0bd"/><stop offset=".38" stop-color="#77766f"/><stop offset=".72" stop-color="#33322f"/><stop offset="1" stop-color="#171613"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="90" y1="125" x2="237" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8d477"/><stop offset=".45" stop-color="#a96818"/><stop offset="1" stop-color="#4f2a0d"/>
+    </linearGradient>
+    <linearGradient id="cloth" x1="160" y1="235" x2="160" y2="495" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5a2117"/><stop offset="1" stop-color="#1b0e0a"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="160" cy="491" rx="113" ry="17" fill="#070605" fill-opacity=".55"/>
+  <path d="m110 282-43 35-25 126 42 12 55-116 21-48-50-9Zm100 0 43 35 25 126-42 12-55-116-21-48 50-9Z" fill="url(#steel)" stroke="#d5a64b" stroke-width="5"/>
+  <path d="m112 270-27 25 53 108 22-22-16-101-32-10Zm96 0 27 25-53 108-22-22 16-101 32-10Z" fill="url(#cloth)" stroke="#8d5a26" stroke-width="4"/>
+  <path d="m113 222-45 19-20 104 46 17 41-72 25-48-47-20Zm94 0 45 19 20 104-46 17-41-72-25-48 47-20Z" fill="url(#steel)" stroke="#d5a64b" stroke-width="5"/>
+  <path d="m104 235 56-17 56 17 28 58-43 54-41 18-41-18-43-54 28-58Z" fill="url(#steel)" stroke="#e0b65b" stroke-width="7"/>
+  <path d="m160 230 33 18-11 56-22 35-22-35-11-56 33-18Z" fill="url(#cloth)" stroke="#d5a64b" stroke-width="4"/>
+  <path d="m128 239 32-14 32 14-8 30h-48l-8-30Z" fill="url(#gold)" stroke="#f0d38d" stroke-width="4"/>
+  <path d="m133 159 27-18 27 18 12 47-18 32h-42l-18-32 12-47Z" fill="url(#steel)" stroke="#e0b65b" stroke-width="6"/>
+  <path d="m126 188 34 9 34-9-4 25-30 17-30-17-4-25Z" fill="#211710" stroke="#c28a36" stroke-width="4"/>
+  <path d="m121 164 10-38 29-21 29 21 10 38-21-12-18 10-18-10-21 12Z" fill="url(#steel)" stroke="#edc66e" stroke-width="6"/>
+  <path d="m160 104 0-29m0 0-11 16m11-16 11 16" stroke="#e8c36a" stroke-linecap="round" stroke-width="6"/>
+  <path d="m47 304-27 99 22 15 51-91-46-23Zm226 0 27 99-22 15-51-91 46-23Z" fill="url(#steel)" stroke="#d5a64b" stroke-width="5"/>
+  <path d="m19 400 25 18-5 33-28-4 8-47Zm282 0-25 18 5 33 28-4-8-47Z" fill="url(#gold)" stroke="#f0d38d" stroke-width="4"/>
+  <path d="m104 408 52 13-6 68h-53l7-81Zm112 0-52 13 6 68h53l-7-81Z" fill="url(#steel)" stroke="#d5a64b" stroke-width="5"/>
+  <path d="m98 480h57v18H91l7-18Zm67 0h57l7 18h-64v-18Z" fill="#171512" stroke="#b67c2b" stroke-width="4"/>
+</svg>

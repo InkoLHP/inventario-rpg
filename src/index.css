@@ -3,6 +3,23 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+.magic-cursor-active,
+.magic-cursor-active * {
+  cursor: none !important;
+}
+
+.magic-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 8px 6px;
+  will-change: transform, opacity;
+  transition: opacity 120ms ease;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
