@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 520" fill="none">
+  <defs>
+    <linearGradient id="skin" x1="100" y1="100" x2="220" y2="300" gradientUnits="userSpaceOnUse"><stop stop-color="#e7bd91"/><stop offset="1" stop-color="#9d6245"/></linearGradient>
+    <linearGradient id="tunic" x1="160" y1="200" x2="160" y2="490" gradientUnits="userSpaceOnUse"><stop stop-color="#77503b"/><stop offset="1" stop-color="#2c1c16"/></linearGradient>
+    <linearGradient id="leather" x1="60" y1="230" x2="260" y2="455" gradientUnits="userSpaceOnUse"><stop stop-color="#a4774d"/><stop offset="1" stop-color="#422819"/></linearGradient>
+  </defs>
+  <ellipse cx="160" cy="491" rx="95" ry="15" fill="#070605" fill-opacity=".5"/>
+  <path d="m119 311-36 38-31 104 34 11 49-87 25-40-41-26Zm82 0 36 38 31 104-34 11-49-87-25-40 41-26Z" fill="url(#skin)" stroke="#3d271c" stroke-width="5"/>
+  <path d="m116 286-28 22 20 109 42 6 13-97-47-40Zm88 0 28 22-20 109-42 6-13-97 47-40Z" fill="url(#tunic)" stroke="#321f16" stroke-width="5"/>
+  <path d="m112 213-43 17-25 107 42 19 51-78 23-43-48-22Zm96 0 43 17 25 107-42 19-51-78-23-43 48-22Z" fill="url(#skin)" stroke="#583725" stroke-width="5"/>
+  <path d="m113 221 47-17 47 17 26 72-29 61-44 16-44-16-29-61 26-72Z" fill="url(#tunic)" stroke="#a67c52" stroke-width="5"/>
+  <path d="m160 212 27 14-10 43-17 21-17-21-10-43 27-14Z" fill="#d3b18a" stroke="#68442e" stroke-width="4"/>
+  <path d="m131 236 29 20 29-20-8 62h-42l-8-62Z" fill="#493023"/>
+  <path d="m131 306 29 16 29-16 20 38-49 20-49-20 20-38Z" fill="url(#leather)" stroke="#b18553" stroke-width="4"/>
+  <path d="m132 156 28-12 28 12 10 48-14 29h-48l-14-29 10-48Z" fill="url(#skin)" stroke="#583725" stroke-width="5"/>
+  <path d="m131 177 11 3m36 0 11-3m-28 19 5 3 5-3" stroke="#492a1c" stroke-linecap="round" stroke-width="4"/>
+  <path d="m126 161 4-30 30-22 30 22 4 30-12-9-22 7-22-7-12 9Z" fill="#3c241a" stroke="#241610" stroke-width="5"/>
+  <path d="m126 400 28 5-7 73h-48l27-78Zm68 0-28 5 7 73h48l-27-78Z" fill="#5a3b2b" stroke="#39251a" stroke-width="5"/>
+  <path d="m102 475h49v18H93l9-18Zm67 0h49l9 18h-58v-18Z" fill="#241a15" stroke="#b18553" stroke-width="4"/>
+  <path d="m45 420 36 11-7 24-39-7 10-28Zm230 0-36 11 7 24 39-7-10-28Z" fill="url(#leather)" stroke="#4b3020" stroke-width="4"/>
+</svg>

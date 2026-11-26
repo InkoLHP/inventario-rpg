@@ -1,475 +1,129 @@
-import React, { useState } from "react";
-import { motion, useSpring } from "framer-motion";
-import {
-  Shield,
-  Sword,
-  Crown,
-  Shirt,
-  Gem,
-  Sparkles,
-  RotateCcw,
-  AlertCircle,
-  CheckCircle2,
-  ScrollText,
-} from "lucide-react";
-import { OrbitCardStack, type OrbitStackItem } from "@/components/ui/orbit-card-stack";
-import { Carousel_002 } from "@/components/ui/skiper-ui/skiper48";
+import { useState, type DragEvent } from "react";
+import { AnimatePresence, motion, useSpring } from "framer-motion";
+import { AlertCircle, CheckCircle2, Crown, Gem, Hand, RotateCcw, Shield, Shirt, Sparkles, Sword } from "lucide-react";
+import { InventoryDeck } from "@/features/inventory/InventoryDeck";
+import { MagicCursor } from "@/components/ui/magic-cursor";
+import { EQUIPMENT_SLOTS, INITIAL_ITEMS } from "@/features/inventory/data";
+import type { Feedback, RPGItem, SlotType } from "@/features/inventory/types";
 
-// Mesma física de mola do Skiper61 para a aura mágica do cursor
-const SPRING = {
-  mass: 0.1,
-  damping: 10,
-  stiffness: 131,
-};
-
-type SlotType = "HELMET" | "ARMOR" | "WEAPON" | "SHIELD" | "AMULET";
-
-interface RPGItem extends OrbitStackItem {
-  id: string;
-  slot: SlotType;
-  attack: number;
-  defense: number;
-  magic: number;
-}
-
-const INITIAL_ITEMS: RPGItem[] = [
-  {
-    id: "elmo-corvo",
-    name: "Elmo do Corvo",
-    role: "CABEÇA • ELMO PESADO",
-    description: "Forjado em ferro negro nas montanhas de cinzas. Protege contra golpes críticos.",
-    accent: "#94a3b8",
-    initials: "EL",
-    stat: "+14 DEFESA",
-    slot: "HELMET",
-    attack: 0,
-    defense: 14,
-    magic: 2,
-  },
-  {
-    id: "lamina-solar",
-    name: "Lâmina Solar",
-    role: "MÃO PRINCIPAL • ESPADA",
-    description: "Aço templário banhado em ouro velho que arde contra criaturas das trevas.",
-    accent: "#f59e0b",
-    initials: "ES",
-    stat: "+26 ATAQUE",
-    slot: "WEAPON",
-    attack: 26,
-    defense: 2,
-    magic: 6,
-  },
-  {
-    id: "cota-draconica",
-    name: "Couraça de Sangue",
-    role: "TORSO • ARMADURA",
-    description: "Placas sobrepostas de couro de wyvern e bronze antigo. Resistência lendária.",
-    accent: "#b91c1c",
-    initials: "AR",
-    stat: "+32 DEFESA",
-    slot: "ARMOR",
-    attack: 0,
-    defense: 32,
-    magic: 4,
-  },
-  {
-    id: "egide-carvalho",
-    name: "Égide de Carvalho",
-    role: "MÃO SECUNDÁRIA • ESCUDO",
-    description: "Escudo rúnico capaz de dissipar maldições e aparar investidas brutais.",
-    accent: "#10b981",
-    initials: "EC",
-    stat: "+18 DEF / +8 MAG",
-    slot: "SHIELD",
-    attack: 2,
-    defense: 18,
-    magic: 8,
-  },
-  {
-    id: "coracao-rubi",
-    name: "Amuleto Carmesim",
-    role: "ACESSÓRIO • AMULETO",
-    description: "Pulsa com o calor de uma forja ancestral, amplificando o poder arcano.",
-    accent: "#e11d48",
-    initials: "AM",
-    stat: "+20 MAGIA",
-    slot: "AMULET",
-    attack: 5,
-    defense: 3,
-    magic: 20,
-  },
-];
-
-// Cartas para o componente Skiper48 (Grimório de Relíquias)
-const GRIMOIRE_CARDS = [
-  {
-    src: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80",
-    alt: "Tomo das Cinzas",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=600&q=80",
-    alt: "Pergaminho Rúnico",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1615672968435-75b78769f282?w=600&q=80",
-    alt: "Relíquia de Ouro",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&q=80",
-    alt: "Cálice Antigo",
-  },
-];
-
-const SLOT_CONFIG: {
-  key: SlotType;
-  label: string;
-  hint: string;
-  icon: React.ReactNode;
-}[] = [
-  { key: "HELMET", label: "Elmo", hint: "Cabeça", icon: <Crown className="size-5" /> },
-  { key: "ARMOR", label: "Armadura", hint: "Torso", icon: <Shirt className="size-5" /> },
-  { key: "WEAPON", label: "Mão Principal", hint: "Espada", icon: <Sword className="size-5" /> },
-  { key: "SHIELD", label: "Mão Secundária", hint: "Escudo", icon: <Shield className="size-5" /> },
-  { key: "AMULET", label: "Relíquia", hint: "Amuleto", icon: <Gem className="size-5" /> },
-];
+const SPRING = { mass: 0.1, damping: 10, stiffness: 131 };
+const SLOT_ICONS = { helmet: Crown, armor: Shirt, weapon: Sword, shield: Shield, amulet: Gem };
 
 export function App() {
   const [equipped, setEquipped] = useState<Partial<Record<SlotType, RPGItem>>>({});
-  const [selectedItem, setSelectedItem] = useState<RPGItem | null>(INITIAL_ITEMS[2]);
-  const [feedback, setFeedback] = useState<{
-    type: "success" | "error" | "info";
-    text: string;
-  }>({
+  const [selectedItem, setSelectedItem] = useState<RPGItem | null>(INITIAL_ITEMS[2] ?? null);
+  const [feedback, setFeedback] = useState<Feedback>({
     type: "info",
-    text: "Arraste uma carta do leque até o slot correspondente ou clique para selecionar.",
+    text: "Arraste uma carta até o encaixe correspondente ou selecione e clique em um espaço vazio.",
   });
   const [wrongSlot, setWrongSlot] = useState<SlotType | null>(null);
-
-  // Aura mágica do cursor baseada no Skiper61 (SpringMouseFollow)
   const xSpring = useSpring(0, SPRING);
   const ySpring = useSpring(0, SPRING);
   const opacitySpring = useSpring(0, SPRING);
-
-  const equippedIds = new Set(Object.values(equipped).map((i) => i?.id));
+  const equippedIds = new Set(Object.values(equipped).map((item) => item?.id));
   const bagItems = INITIAL_ITEMS.filter((item) => !equippedIds.has(item.id));
-
-  // Soma total dos atributos equipados
   const stats = Object.values(equipped).reduce(
-    (acc, item) => ({
-      attack: acc.attack + (item?.attack ?? 0),
-      defense: acc.defense + (item?.defense ?? 0),
-      magic: acc.magic + (item?.magic ?? 0),
+    (total, item) => ({
+      attack: total.attack + (item?.attack ?? 0),
+      defense: total.defense + (item?.defense ?? 0),
+      magic: total.magic + (item?.magic ?? 0),
     }),
-    { attack: 10, defense: 5, magic: 5 }
+    { attack: 10, defense: 5, magic: 5 },
   );
 
-  const tryEquipItem = (item: RPGItem, targetSlot: SlotType) => {
-    if (item.slot !== targetSlot) {
-      setWrongSlot(targetSlot);
-      setTimeout(() => setWrongSlot(null), 500);
+  const equipItem = (item: RPGItem, target: SlotType) => {
+    if (item.slot !== target) {
+      setWrongSlot(target);
+      window.setTimeout(() => setWrongSlot(null), 500);
       setFeedback({
         type: "error",
-        text: `Encaixe inválido! "${item.name}" pertence ao slot de ${
-          SLOT_CONFIG.find((s) => s.key === item.slot)?.label
-        }.`,
+        text: `Encaixe inválido! ${item.name} pertence ao espaço ${EQUIPMENT_SLOTS.find((slot) => slot.key === item.slot)?.label}.`,
       });
       return;
     }
-
-    setEquipped((prev) => ({ ...prev, [targetSlot]: item }));
-    if (selectedItem?.id === item.id) setSelectedItem(null);
-    setFeedback({
-      type: "success",
-      text: `${item.name} equipado com sucesso!`,
-    });
+    const replaced = equipped[target];
+    setEquipped((previous) => ({ ...previous, [target]: item }));
+    setSelectedItem(replaced ?? null);
+    setFeedback({ type: "success", text: `${item.name} equipado com sucesso!` });
   };
 
   const unequipSlot = (slot: SlotType) => {
     const item = equipped[slot];
     if (!item) return;
-    setEquipped((prev) => {
-      const next = { ...prev };
+    setEquipped((previous) => {
+      const next = { ...previous };
       delete next[slot];
       return next;
     });
-    setFeedback({
-      type: "info",
-      text: `${item.name} retornou ao baú.`,
-    });
+    setSelectedItem(item);
+    setFeedback({ type: "info", text: `${item.name} voltou para o baú.` });
   };
 
-  const handleDragStart = (e: React.DragEvent, item: OrbitStackItem) => {
-    const rpgItem = INITIAL_ITEMS.find((i) => i.name === item.name);
-    if (!rpgItem) return;
-    e.dataTransfer.setData("text/plain", rpgItem.id);
-    setSelectedItem(rpgItem);
+  const handleDragStart = (event: DragEvent<HTMLElement>, item: RPGItem) => {
+    event.dataTransfer.setData("text/plain", item.id);
+    event.dataTransfer.effectAllowed = "move";
+    setSelectedItem(item);
   };
 
-  const handleDropOnSlot = (e: React.DragEvent, targetSlot: SlotType) => {
-    e.preventDefault();
-    const itemId = e.dataTransfer.getData("text/plain");
-    const item = INITIAL_ITEMS.find((i) => i.id === itemId);
-    if (item) {
-      tryEquipItem(item, targetSlot);
-    }
+  const handleDrop = (event: DragEvent, slot: SlotType) => {
+    event.preventDefault();
+    const item = INITIAL_ITEMS.find((entry) => entry.id === event.dataTransfer.getData("text/plain"));
+    if (item) equipItem(item, slot);
   };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,#2a1d15_0%,#120d0a_75%)] text-[#e8dcc4] selection:bg-amber-600/40">
-      {/* Cabeçalho Medieval */}
       <header className="border-b border-amber-500/20 bg-[#18110c]/90 px-6 py-4 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-xl border border-amber-500/40 bg-amber-950/50 text-amber-400 shadow-inner">
-              <Shield className="size-6" />
-            </div>
-            <div>
-              <h1 className="font-medieval text-2xl font-bold tracking-wider text-amber-300">
-                ARSENAL DA ORDEM
-              </h1>
-              <p className="text-sm italic text-stone-400">
-                Equipe as relíquias nos engastes corretos para despertar seus atributos
-              </p>
-            </div>
+            <div className="grid size-11 place-items-center rounded-xl border border-amber-500/40 bg-amber-950/50 text-amber-400"><Shield className="size-6" /></div>
+            <div><h1 className="font-medieval text-2xl font-bold tracking-wider text-amber-300">ARSENAL DA ORDEM</h1><p className="text-sm italic text-stone-400">Equipe relíquias para despertar os atributos do cavaleiro</p></div>
           </div>
-
-          <button
-            onClick={() => {
-              setEquipped({});
-              setFeedback({ type: "info", text: "Todos os itens foram guardados no baú." });
-            }}
-            className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-[#261a12] px-4 py-2 font-medieval text-xs tracking-widest text-amber-200 transition hover:border-amber-400 hover:bg-amber-950/60"
-          >
-            <RotateCcw className="size-4" />
-            DESEQUIPAR TUDO
-          </button>
+          <button onClick={() => { setEquipped({}); setFeedback({ type: "info", text: "Todos os itens voltaram para o baú." }); }} className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-[#261a12] px-4 py-2 font-medieval text-xs tracking-widest text-amber-200 transition hover:border-amber-400"><RotateCcw className="size-4" />DESEQUIPAR TUDO</button>
         </div>
       </header>
 
-      {/* Barra de Feedback / Mensagens do Mestre */}
       <div className="mx-auto mt-4 max-w-7xl px-6">
-        <div
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-base transition-colors ${
-            feedback.type === "error"
-              ? "border-red-500/50 bg-red-950/40 text-red-200"
-              : feedback.type === "success"
-                ? "border-emerald-500/50 bg-emerald-950/40 text-emerald-200"
-                : "border-amber-500/25 bg-[#1c140e]/80 text-amber-100/90"
-          }`}
-        >
-          {feedback.type === "error" ? (
-            <AlertCircle className="size-5 shrink-0 text-red-400" />
-          ) : feedback.type === "success" ? (
-            <CheckCircle2 className="size-5 shrink-0 text-emerald-400" />
-          ) : (
-            <Sparkles className="size-5 shrink-0 text-amber-400" />
-          )}
-          <span>{feedback.text}</span>
+        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${feedback.type === "error" ? "border-red-500/50 bg-red-950/40 text-red-200" : feedback.type === "success" ? "border-emerald-500/50 bg-emerald-950/40 text-emerald-200" : "border-amber-500/25 bg-[#1c140e]/80 text-amber-100"}`}>
+          {feedback.type === "error" ? <AlertCircle className="size-5" /> : feedback.type === "success" ? <CheckCircle2 className="size-5" /> : <Sparkles className="size-5 text-amber-400" />}{feedback.text}
         </div>
       </div>
 
-      {/* Layout Principal */}
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 p-6 lg:grid-cols-12">
-        {/* COLUNA ESQUERDA: Boneco & Slots de Equipamento (com aura física do Skiper61) */}
-        <section
-          onPointerMove={(e) => {
-            const bounds = e.currentTarget.getBoundingClientRect();
-            xSpring.set(e.clientX - bounds.left - 80);
-            ySpring.set(e.clientY - bounds.top - 80);
-          }}
-          onPointerEnter={() => opacitySpring.set(0.35)}
-          onPointerLeave={() => opacitySpring.set(0)}
-          className="relative overflow-hidden rounded-3xl border-2 border-amber-500/25 bg-[#1a120d]/95 p-6 shadow-2xl lg:col-span-5"
-        >
-          {/* Brilho mágico seguindo o cursor (Skiper61 Spring) */}
-          <motion.div
-            style={{ x: xSpring, y: ySpring, opacity: opacitySpring }}
-            className="pointer-events-none absolute size-40 rounded-full bg-amber-500/30 blur-3xl"
-          />
-
+        <section onPointerMove={(event) => { const bounds = event.currentTarget.getBoundingClientRect(); xSpring.set(event.clientX - bounds.left - 80); ySpring.set(event.clientY - bounds.top - 80); }} onPointerEnter={() => opacitySpring.set(0.35)} onPointerLeave={() => opacitySpring.set(0)} className="relative overflow-hidden rounded-3xl border-2 border-amber-500/25 bg-[#1a120d]/95 p-6 shadow-2xl lg:col-span-5">
+          <motion.div style={{ x: xSpring, y: ySpring, opacity: opacitySpring }} className="pointer-events-none absolute size-40 rounded-full bg-amber-500/30 blur-3xl" />
           <div className="relative z-10">
-            <div className="mb-5 flex items-center justify-between border-b border-amber-500/20 pb-3">
-              <h2 className="font-medieval text-lg font-bold tracking-wider text-amber-300">
-                CAVALEIRO • ENGASTES
-              </h2>
-              <span className="rounded-full border border-amber-500/30 bg-amber-950/60 px-3 py-0.5 text-xs text-amber-200">
-                {Object.keys(equipped).length} / 5 Equipados
-              </span>
-            </div>
-
-            {/* Grade de Slots */}
-            <div className="space-y-3">
-              {SLOT_CONFIG.map((slot) => {
-                const current = equipped[slot.key];
-                const isWrong = wrongSlot === slot.key;
-
-                return (
-                  <motion.div
-                    key={slot.key}
-                    animate={isWrong ? { x: [-8, 8, -6, 6, 0] } : { x: 0 }}
-                    transition={{ duration: 0.35 }}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => handleDropOnSlot(e, slot.key)}
-                    onClick={() => {
-                      if (current) {
-                        unequipSlot(slot.key);
-                      } else if (selectedItem) {
-                        tryEquipItem(selectedItem, slot.key);
-                      }
-                    }}
-                    className={`group relative flex cursor-pointer items-center justify-between rounded-2xl border-2 p-4 transition-all ${
-                      isWrong
-                        ? "border-red-500 bg-red-950/40"
-                        : current
-                          ? "border-amber-400/70 bg-gradient-to-r from-amber-950/60 to-[#241810] shadow-lg shadow-amber-950/30"
-                          : "border-dashed border-amber-500/25 bg-[#130d09]/80 hover:border-amber-400/50 hover:bg-[#1f1610]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`grid size-12 place-items-center rounded-xl border ${
-                          current
-                            ? "border-amber-400 bg-amber-500/20 text-amber-300"
-                            : "border-stone-700 bg-stone-900/80 text-stone-500 group-hover:text-amber-400"
-                        }`}
-                      >
-                        {slot.icon}
-                      </div>
-
-                      <div>
-                        <p className="font-medieval text-xs uppercase tracking-widest text-amber-500/80">
-                          {slot.label} ({slot.hint})
-                        </p>
-                        {current ? (
-                          <h3 className="font-medieval text-lg font-bold text-amber-100">
-                            {current.name}
-                          </h3>
-                        ) : (
-                          <p className="text-sm italic text-stone-500">
-                            Arraste ou clique para equipar...
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {current ? (
-                      <div className="text-right">
-                        <span className="block font-medieval text-xs font-bold text-amber-300">
-                          {current.stat}
-                        </span>
-                        <span className="text-xs text-stone-400 group-hover:text-red-300">
-                          Clique p/ remover
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="rounded border border-stone-800 px-2 py-1 font-medieval text-[10px] tracking-widest text-stone-600">
-                        VAZIO
-                      </span>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Painel de Atributos Calculados */}
-            <div className="mt-6 grid grid-cols-3 gap-3 rounded-2xl border border-amber-500/20 bg-[#120c08] p-4 text-center">
-              <div>
-                <span className="block font-medieval text-xs text-stone-400">ATAQUE</span>
-                <span className="font-medieval text-2xl font-bold text-amber-400">
-                  {stats.attack}
-                </span>
-              </div>
-              <div className="border-x border-amber-500/15">
-                <span className="block font-medieval text-xs text-stone-400">DEFESA</span>
-                <span className="font-medieval text-2xl font-bold text-emerald-400">
-                  {stats.defense}
-                </span>
-              </div>
-              <div>
-                <span className="block font-medieval text-xs text-stone-400">MAGIA</span>
-                <span className="font-medieval text-2xl font-bold text-purple-400">
-                  {stats.magic}
-                </span>
+            <div className="mb-5 flex items-center justify-between border-b border-amber-500/20 pb-3"><h2 className="font-medieval text-lg font-bold text-amber-300">CAVALEIRO • EQUIPAMENTO</h2><span className="rounded-full border border-amber-500/30 bg-amber-950/60 px-3 py-1 text-xs text-amber-200">{Object.keys(equipped).length} / 5</span></div>
+            <div className="mb-5 flex min-h-56 items-center justify-center rounded-2xl border border-amber-500/15 bg-[radial-gradient(ellipse_at_center,rgba(217,119,6,.15),transparent_68%)]">
+              <div className="relative h-56 w-40" aria-label="Cavaleiro com seus equipamentos" role="img">
+                <img src="/knight-unarmored.svg" alt="" className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_0_20px_rgba(217,119,6,.18)]" />
+                <AnimatePresence>{EQUIPMENT_SLOTS.filter((slot) => equipped[slot.key]).map((slot) => {
+                  const Icon = SLOT_ICONS[slot.icon];
+                  const placement = { HELMET: "top-7 left-1/2 -translate-x-1/2", ARMOR: "top-[6.4rem] left-1/2 -translate-x-1/2", WEAPON: "bottom-8 right-0", SHIELD: "bottom-8 left-0", AMULET: "top-[8.4rem] left-1/2 -translate-x-1/2" }[slot.key];
+                  return <motion.div key={slot.key} initial={{ opacity: 0, scale: 0.3, y: -22, rotate: -20 }} animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }} exit={{ opacity: 0, scale: 0.3, y: 18 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} title={equipped[slot.key]?.name} className={`absolute z-20 grid size-9 place-items-center rounded-xl border border-amber-300/80 bg-[#21140c]/90 text-amber-300 shadow-[0_0_18px_rgba(245,158,11,.35)] ${placement}`}><Icon className="size-5" /></motion.div>;
+                })}</AnimatePresence>
               </div>
             </div>
+            <div className="space-y-3">{EQUIPMENT_SLOTS.map((slot) => {
+              const current = equipped[slot.key];
+              const Icon = SLOT_ICONS[slot.icon];
+              const isWrong = wrongSlot === slot.key;
+              return <motion.div key={slot.key} data-equipment-slot={slot.key} animate={isWrong ? { x: [-8, 8, -6, 6, 0] } : { x: 0 }} transition={{ duration: 0.35 }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => handleDrop(event, slot.key)} onClick={() => current ? unequipSlot(slot.key) : selectedItem && equipItem(selectedItem, slot.key)} className={`group flex cursor-pointer items-center justify-between rounded-2xl border-2 p-3 transition-colors ${isWrong ? "border-red-500 bg-red-950/40" : current ? "border-amber-400/70 bg-amber-950/40" : "border-dashed border-amber-500/25 bg-[#130d09]/80 hover:border-amber-400/50"}`}>
+                <div className="flex items-center gap-3"><div className={`grid size-11 place-items-center rounded-xl border ${current ? "border-amber-400 bg-amber-500/20 text-amber-300" : "border-stone-700 text-stone-500"}`}><Icon className="size-5" /></div><div><p className="font-medieval text-xs tracking-widest text-amber-500/80">{slot.label} ({slot.hint})</p>{current ? <AnimatePresence mode="wait" initial={false}><motion.p key={current.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="font-medieval font-bold text-amber-100">{current.name}</motion.p></AnimatePresence> : <p className="text-sm italic text-stone-500">Arraste ou clique para equipar</p>}</div></div>
+                {current ? <span className="text-right font-medieval text-xs text-amber-300">{current.stat}<span className="block font-sans text-stone-400">Clique para remover</span></span> : <span className="text-xs tracking-widest text-stone-600">VAZIO</span>}
+              </motion.div>;
+            })}</div>
+            <div className="mt-5 grid grid-cols-3 rounded-2xl border border-amber-500/20 bg-[#120c08] p-4 text-center">{([["ATAQUE", stats.attack, "text-amber-400"], ["DEFESA", stats.defense, "text-emerald-400"], ["MAGIA", stats.magic, "text-purple-400"]] as const).map(([label, value, color]) => <div key={label}><span className="block font-medieval text-xs text-stone-400">{label}</span><span className={`font-medieval text-2xl font-bold ${color}`}>{value}</span></div>)}</div>
           </div>
         </section>
 
-        {/* COLUNA DIREITA: Baú em Leque (OrbitCardStack) + Grimório (Skiper48) */}
-        <div className="flex flex-col gap-6 lg:col-span-7">
-          {/* Baú de Relíquias (OrbitCardStack) */}
-          <section className="rounded-3xl border-2 border-amber-500/25 bg-[#1a120d]/95 p-6 shadow-2xl">
-            <div className="mb-2 flex items-center justify-between border-b border-amber-500/20 pb-3">
-              <div>
-                <h2 className="font-medieval text-lg font-bold tracking-wider text-amber-300">
-                  BAÚ DE RELÍQUIAS
-                </h2>
-                <p className="text-sm text-stone-400">
-                  Passe o cursor para abrir o leque • Arraste a carta para o slot à esquerda
-                </p>
-              </div>
-              {selectedItem && (
-                <span className="rounded-lg border border-amber-400/40 bg-amber-950/60 px-3 py-1 font-medieval text-xs text-amber-200">
-                  Selecionado: {selectedItem.name}
-                </span>
-              )}
-            </div>
-
-            {bagItems.length > 0 ? (
-              <OrbitCardStack
-                items={bagItems}
-                spread={115}
-                lift={26}
-                defaultActiveIndex={Math.floor(bagItems.length / 2)}
-                className="min-h-[430px] p-2"
-                cardClassName="w-[16.5rem] border-2 border-amber-600/50 bg-[#f4e4bc] text-[#24170e] shadow-2xl"
-                onActiveChange={(item) => {
-                  const found = INITIAL_ITEMS.find((i) => i.name === item.name);
-                  if (found) setSelectedItem(found);
-                }}
-                onCardDragStart={handleDragStart}
-              />
-            ) : (
-              <div className="flex h-[340px] flex-col items-center justify-center rounded-2xl border border-dashed border-amber-500/20 text-center">
-                <Sparkles className="mb-2 size-10 text-amber-400" />
-                <p className="font-medieval text-lg text-amber-200">
-                  Arsenal Totalmente Equipado!
-                </p>
-                <p className="text-sm text-stone-400">
-                  Clique em qualquer slot à esquerda para devolver um item ao baú.
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* Grimório de Tomos & Cartas (Skiper48 Carousel_002) */}
-          <section className="grid grid-cols-1 items-center gap-6 rounded-3xl border-2 border-amber-500/25 bg-[#1a120d]/95 p-6 shadow-2xl md:grid-cols-2">
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-amber-400">
-                <ScrollText className="size-5" />
-                <span className="font-medieval text-xs tracking-widest uppercase">
-                  Grimório Antigo
-                </span>
-              </div>
-              <h3 className="font-medieval text-xl font-bold text-amber-200">
-                Cartas de Lore & Mapas
-              </h3>
-              <p className="mt-2 text-base leading-relaxed text-stone-300">
-                Deslize o baralho ao lado para consultar os manuscritos da campanha e as
-                ilustrações das relíquias guardadas pela Ordem.
-              </p>
-            </div>
-
-            <div className="flex justify-center">
-              <Carousel_002
-                images={GRIMOIRE_CARDS}
-                loop
-                className="max-w-[260px]"
-              />
-            </div>
-          </section>
-        </div>
+        <section className="rounded-3xl border-2 border-amber-500/25 bg-[#1a120d]/95 p-6 shadow-2xl lg:col-span-7">
+          <div className="mb-2 flex items-center justify-between border-b border-amber-500/20 pb-3"><div><h2 className="font-medieval text-lg font-bold text-amber-300">BAÚ DE RELÍQUIAS</h2><p className="text-sm text-stone-400">Passe o cursor para abrir o leque • Arraste uma carta até o encaixe</p></div>{selectedItem && <span className="hidden rounded-lg border border-amber-400/40 bg-amber-950/60 px-3 py-1 font-medieval text-xs text-amber-200 sm:inline">Na mão: {selectedItem.name}</span>}</div>
+          {bagItems.length ? <InventoryDeck items={bagItems} onSelect={setSelectedItem} onDragStart={handleDragStart} onDropOnSlot={(item, slot) => equipItem(item, slot as SlotType)} /> : <div className="flex h-[340px] flex-col items-center justify-center rounded-2xl border border-dashed border-amber-500/20 text-center"><Sparkles className="mb-2 size-10 text-amber-400" /><p className="font-medieval text-lg text-amber-200">Arsenal totalmente equipado!</p><p className="text-sm text-stone-400">Remova um item do cavaleiro para devolvê-lo ao baú.</p></div>}
+          <p className="flex items-center justify-center gap-2 text-center text-sm text-amber-200/70"><Hand className="size-4" /> As cartas acompanham o cursor durante o arraste</p>
+        </section>
       </main>
+      <MagicCursor />
     </div>
   );
 }
